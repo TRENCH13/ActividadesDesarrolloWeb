@@ -90,6 +90,7 @@
                                     </content>
                                 </ScrollPane>
                         <WebView fx:id="wbBody" opacity="0.65" prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0" />
+                        <ImageView fx:id="ivBody" fitHeight="370.0" fitWidth="885.0" pickOnBounds="true" preserveRatio="true" AnchorPane.bottomAnchor="5.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0" />
                             </children>
                         </AnchorPane>
                     </content>

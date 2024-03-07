@@ -8,10 +8,14 @@ import javafx.event.EventHandler;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.paint.Color;
 import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import javafx.concurrent.Task;
 import javafx.concurrent.WorkerStateEvent;
+import org.controlsfx.control.tableview2.filter.filtereditor.SouthFilter;
 
 import java.io.*;
 import java.net.URL;
@@ -44,6 +48,8 @@ public class HelloController {
     private WebView wbBody;
     @FXML
     private WebView wbCabecera;
+    @FXML
+    private ImageView ivBody;
     private ToggleGroup toggleGroup;
 
     //Variables globales
@@ -54,13 +60,18 @@ public class HelloController {
 
     @FXML
     void btnConsultar(ActionEvent event) {
-        buscarUrl();
+        lbRespuesta.setText("Buscando");
+        lbRespuesta.setTextFill(Color.BLACK);
+        new Thread(()-> buscarUrl()).start();
     }
 
     @FXML
     void btnGuardar(ActionEvent event) {
+        System.out.println("Botón guardado presionar");
+        System.out.println(contentType);
         if (contentType != null) {
             if (contentType.startsWith("text/html")) {
+                System.out.println("Guardado de html");
                 guardarArchivoHtml();
             } else if (contentType.startsWith("image/")) {
                 guardarArchivoImagen();
@@ -90,6 +101,7 @@ public class HelloController {
 
     public void buscarUrl(){
         String url = lbUrl.getText().trim();
+        urlConsulta = url;
         //Validaciones del comboBox y textField
         if(!url.isEmpty()){
             String opcionCbSeleccionada = cbMetodoPeticion.getValue();
@@ -118,6 +130,7 @@ public class HelloController {
                         String statusMessage = statusCode + " - " + HttpMensajes.getMessage(statusCode);
                         lbRespuesta.setText(statusMessage);
                         lbTipoContenido.setText(response.headers().firstValue("Content-Type").orElse("Desconocido"));
+                        contentType = response.headers().firstValue("Content-Type").orElse("Desconocido");
                         System.out.println("Consulta completada. La consulta HTTP se ha completado correctamente.");
 
                         //Mostrar la respuesta
@@ -129,8 +142,19 @@ public class HelloController {
 
                         //Identificar si es pretty o raw
                         if (rbPretty.isSelected()) {
-                            wbCabecera.getEngine().loadContent(response.headers().map().toString());
-                            wbBody.getEngine().loadContent(responseBody);
+                            if(contentType.startsWith("text/html")){
+                                wbCabecera.getEngine().loadContent(response.headers().map().toString());
+                                wbBody.getEngine().loadContent(responseBody);
+                            }else if(contentType.startsWith("image/")){
+                                tabCuerpo.setContent(ivBody);
+                                try{
+                                    URL imagen = new URL(urlConsulta);
+                                    Image imagen2 = new Image(imagen.toExternalForm());
+                                    ivBody.setImage(imagen2);
+                                }catch(Exception e){
+                                    e.printStackTrace();
+                                }
+                            }
                         } else if (rbRaw.isSelected()) {
                             tabCabecera.setContent(headerTextArea);
                             tabCuerpo.setContent(bodyTextArea);
@@ -162,6 +186,7 @@ public class HelloController {
         fileChooser.setTitle("Guardar Archivo HTML");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Archivos HTML", "*.html"));
         File selectedFile = fileChooser.showSaveDialog(null);
+
         if (selectedFile != null) {
             try {
                 FileWriter fileWriter = new FileWriter(selectedFile);
@@ -180,6 +205,7 @@ public class HelloController {
     public void guardarArchivoImagen(){
         try{
             URL imageUrl = new URL(urlConsulta);
+            System.out.println(urlConsulta);
             InputStream inputStream = imageUrl.openStream();
 
             FileChooser fileChooser = new FileChooser();
@@ -192,6 +218,8 @@ public class HelloController {
                 extFilter = new FileChooser.ExtensionFilter("Imagen JPEG (*.jpg)", "*.jpg");
             } else if (contentType.startsWith("image/gif")) {
                 extFilter = new FileChooser.ExtensionFilter("Imagen GIF (*.gif)", "*.gif");
+            }else if (contentType.startsWith("image/webp")){
+                extFilter = new FileChooser.ExtensionFilter("Imagen WEBP (*.webp)", "*.webp");
             }
 
             if (extFilter != null) {
